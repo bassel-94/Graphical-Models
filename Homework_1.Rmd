@@ -1,0 +1,511 @@
+---
+title: "Solution to homework - 1"
+author: "Bassel MASRI"
+date: "11/11/2020"
+output:
+  pdf_document:
+    toc: yes
+    df_print: paged
+    fig_caption: yes
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::is_latex_output()
+knitr::is_html_output(excludes = "markdown")
+```
+
+# Part A - Review of probability and statistics
+
+## Exercise 1
+
+The probability of equally likely outcomes is expressed as follows for an event A of the sample space $\Omega$:
+
+$$
+P(A) =\frac{{\lvert A \rvert}}{\lvert \Omega \rvert}
+$$
+In an independent fair coin toss three times in a row, the sample subspace $\omega \in \Omega$ has to be considered. With each toss $\omega = 2$.
+
+a) The probability of obtaining three heads in a row is :
+$$
+P (\{HHH\}) = \frac{1}{2}\frac{1}{2}\frac{1}{2} = \frac{1}{8}
+$$
+
+b) Similarly, the sequence {HTH} is also expressed as follows : 
+
+$$
+P (\{HTH\}) = \frac{1}{8}
+$$
+
+c) The events of obtaining any sequence with two heads and one tail are the following : $\{HTH\},\{HHT\},\{THH\}$
+Let $C$ be the event mentioned above.
+
+$$
+P(C) = P(\{HTH\} \cup \{HHT\} \cup \{THH\}) = \frac{1}{8} + \frac{1}{8} + \frac{1}{8} = \frac{3}{8}
+$$
+
+d) The sequence where the number of heads is greater than or equal to the number of tails is the equivalent to obtaining exactly two heads and one tail *OR* three heads
+
+$$
+P(\{HTH\} \cup \{HHT\} \cup \{THH\}) = \frac{3}{8} + \frac{1}{8} = \frac{1}{2}
+$$
+
+e) Let A be the event where first toss is H and B the event where any sequence with 2 heads and 1 tail. According to the law of conditional probability, we can compute the probability of event A given that B occurred as follows :
+
+$$
+P(A|B) = \frac{P(A \cap B)}{P(B)}
+$$
+The intersection of events A and B gives $[{HTH},{HTT},{HHH},{HHT}] \cap [{HTH}, {HHT}, {THH}] = [{HTH}, {HHT}]$
+
+$$
+\frac{P(A \cap B)}{P(B)} = \frac{P[\{HHT\},\{HTH\}]}{P[\{HTH\}, \{HHT\}, \{THH\}]} = \frac{1/8 + 1/8}{3/8} = \frac{2}{3}
+$$
+
+f) Occurrence of $H_1$ provides no information about $H_2$'s occurrence. Therefore, they are independent. To prove so we can compute $P(H_1|H_2)$ and $P(H_1)$ and prove that they are equal. 
+$$
+\begin{cases}
+P(H_1|H_2) = \frac{P(H_1 \cap H_2)}{P(H_2)} = \frac{1/4}{4/8} = \frac{1}{2} \\
+P(H_1) = \frac{4}{8} = \frac{1}{2}
+\end{cases}
+$$
+
+Similarly, we can prove that $P(H_1 \cap H_2) = P(H_1)P(H_2)=1/4$.
+
+g) Given that $D$ occurred, are $H_1$ and $H_2$ independent? The definition of conditional independence is as follows :
+
+$$
+P(H_1 \cap H_2 | D) = P(H_1|D)P(H_2|D) 
+$$
+
+Therefore, we will have to compute each element of the above equality to prove or disprove it.
+
+$$
+P(H_1 \cap H_2 | D) = \frac{P(H_1 \cap H_2 \cap D)}{P(D)} = \frac{1/8}{2/8} = \frac{1}{2} \\
+$$
+
+$$
+\begin{cases}
+P(H_1|D) =  \frac{P(H_1 \cap D)}{P(D)} =  \frac{1}{8}  \\
+P(H_2|D) =  \frac{P(H_2 \cap D)}{P(D)} = \frac{1}{8}
+\end{cases}
+$$
+
+Therefore, we do not have conditional independence because $P(H_1 \cap H_2 | D) \neq P(H_1|D)P(H_2|D)$ because $\frac{1}{2} \neq \frac{1}{64}$
+
+## Exercise 2
+
+a) By definition, every discrete random variable $X$ has a probability mass function *PMF* that defines a probability assigned to each value. $X$ is the random variable representing the number of hits. Let $k$ be the number of trials $\{1, \cdots, 10\}$. We can notice that $X$ belongs to the binomial family $\{10,0.2\}$. Therefore, the PMF can be written as follows
+$$
+p_x(k) = P(X = k) = \binom{10}{k}(1-p)^{(10-k)} p^k = \binom{10}{k}0.8^{10-k}0.2^k
+$$
+
+b) The probability of scoring no hits mean that the random variable takes the value $0$. Therefore, $P(X=0) = (0.8)^{10} \approx 0.1074$
+
+c) The probability of scoring more hits than misses means that $X>5$ 
+
+$$
+P(X>5) = \sum_{k=6}^{10} \binom{10}{k}(0.2)^k(0.8)^{10-k} = 0.0064
+$$
+
+d) Expectation of $X$ is defined by the average probability of the outcome if repeated over and over again. Therefore, we can write the expectation and the variance as follows:
+
+$$
+\begin{cases}
+\mathop{\mathbb{E}}(X) = 10\times [0 \times P(X=0) + 1 \times P(X=1)] = 10\times0.2 = 2 \\
+\mathop{\mathbb{Var}}(X) = 10 \times p(1-p) = 10\times 0.16 = 1.6
+\end{cases}
+$$
+
+e) If the player pays 3\$ to enter then it is subtracted from his total. If the player wins 2\$ with every mark then it is added to his total. Therefore, we an define a new random variable $Y = 2X-3$. Since the expectation function is linear, we can apply it to the equation. However, the variance function is non linear, it is squared. 
+
+$$
+\begin{cases}
+\mathop{\mathbb{E}}(Y) = 2 \times \mathop{\mathbb{E}}(X) - 3 = 1 \\
+\mathop{\mathbb{Var}}(Y) = 4 \times \mathop{\mathbb{Var}}(X) + 0 = 6.4
+\end{cases}
+$$
+
+f) The following is the R code to answer the questions mentioned below :
+
+```{r, fig.align = 'center'}
+#-- Plotting the PMF of X using ggplot
+library(ggplot2)
+
+x <- 0:10
+y <- dbinom(x, size=10, prob=0.2)
+df <- data.frame(x,y)
+ggplot(df, aes(x=x, y=y))+ 
+  geom_col() + 
+  labs(title = "Probability distribution of X",
+       x = "Successes (hits)",
+       y = "probability") + theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+#-- Simulation of the probability of having no hits
+mean(rbinom(n = 1000, size = 10, prob = 0.2) == 0)
+
+#-- Simulation of the probability of having more hits than misses
+mean(rbinom(n = 1000, size = 10, prob = 0.2) >=5)
+```
+
+```{r, fig.align = 'center'}
+#-- Plotting the PMF the profit function Y in part (e).
+
+x <- 0:10
+y <- dbinom((2*x-3), size=10, prob=0.2)
+df <- data.frame(x,y)
+ggplot(df, aes(x=x, y=y)) + 
+  geom_col() + 
+  labs(title = "Probability distribution of Y",
+       x = "Gain in dollars",
+       y = "probability") + theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Exact computation of the estimations mentioned above
+
+```{r}
+n <- 3         #-- payment at entrance
+ex <- 10*0.2   #-- expectation of hits
+ey <- 2*ex-3   #-- expectation of wins in $
+cat("Payment at entrance : ", n)
+cat("Expectation of hits is : ", ex)
+cat("Expectation of profits is : ", ey)
+if(ey<=n) cat("This is not a good bet")
+```
+
+Simulation to compute the expectation of Y in e)
+```{r}
+2*mean(rbinom(1000,10,0.2))-3
+```
+
+## Exercise 3
+
+a) To compute $p_x(1)$ we do the following :
+
+$$
+\begin{aligned}
+p_X(1) &= P(X=1) \\
+       &= \sum_y(P(X=1, Y=y)) \\
+       &= P(X=1, Y=1) + P(X=1, Y=2) + P(X=1, Y=3) \\
+       &= \frac{1}{12} + \frac{2}{12} + \frac{1}{12} \\
+       &= \frac{1}{3}
+\end{aligned}
+$$
+
+b) To find the conditional $PMF$ of Y given that $X = 1$ we note that
+
+$$
+p_{Y|X=1}(y|X=1) = P(Y= y| X=1) = \frac{P(Y=y, X=1)}{P(X=1)}
+$$
+
+And therefore, we can write the following for all $y$
+
+
+$$
+\begin{aligned}
+p_{Y|X=1}(1|X=1) &= P(Y= 1| X=1) = \frac{1/12}{1/3)} = \frac{1}{4} \\
+p_{Y|X=1}(2|X=1) &= P(Y= 2| X=1) = \frac{2/12}{1/3)} = \frac{1}{2} \\
+p_{Y|X=1}(3|X=1) &= P(Y= 3| X=1) = \frac{1/12}{1/3)} = \frac{1}{4} \\
+\end{aligned}
+$$
+
+Thus, the conditional $PMF$ of $Y$ given $X=1$ is given by:
+
+$$
+p_{Y|X=1}(y|X=1) = 
+\begin{cases}
+1/4 \text{ if } y = 1 \\
+1/2 \text{ if } y = 2 \\
+1/4 \text{ if } y = 3
+\end{cases}
+$$
+
+c) To compute the estimation of $Y$ given that $X=1$ we do the following
+
+$$
+\begin{aligned}
+E[Y|X=1] &= \sum_{y=1}^3 y \times p_{Y|X=1}(y | X=1) \\
+         &= 1 \times p_{Y|X=1}(1| X=1) + 2 \times p_{Y|X=2}(2 | X=1) + 3 \times p_{Y|X=1}(3 | X=1) \\
+         &= \frac{1}{4} + 1 + \frac{3}{4} \\
+         &= 2
+\end{aligned}
+$$
+d) We will write $X$ and $Y$ in form of a table to solve this question. 
+
+|       | X = 1 | X = 2 |  X = 3 |   |
+|:-----:|:-----:|:-----:|:------:|:-:|
+| Y = 3 |  1/12 | 1/12  |   *    | *  |
+| Y = 2 | 2/12  |   *   |   *    | *  |
+| Y = 1 | 1/12  | 2/12  |   0    | 1/4|
+|       | 1/3   |   *   |   *    | 1  |
+
+Now, we try to find a solution to the above table assuming X and Y are independent. If we are not able to find such a solution, X and Y will not be independent.
+
+Note that, since we are assuming $X$ and $Y$ to be independent, the conditional pdf of $Y$ given $X = 1$ should be equal to the marginal pdf of $Y$. Thus, we can replace the last column in the above table with the pmf we found in part (b). Thus, we get:
+
+|       | X = 1 | X = 2 |  X = 3 |   |
+|:-----:|:-----:|:-----:|:------:|:-:|
+| Y = 3 |  1/12 | 1/12  |   *    |*1/4*|
+| Y = 2 | 2/12  |   *   |   *    |*1/2*|
+| Y = 1 | 1/12  | 2/12  |   0    |1/4|
+|       | *1/3*   |   *   |   *    | *1 *|
+
+Now, we can complete the first row and we get:
+
+|       | X = 1 | X = 2 |  X = 3 |   |
+|:-----:|:-----:|:-----:|:------:|:-:|
+| Y = 3 |  1/12 | 1/12  |   *1/12* |*1/4*|
+| Y = 2 | 2/12  |   *   |   *    |*1/2*|
+| Y = 1 | 1/12  | 2/12  |   0    |*1/4*|
+|       | *1/3*   |   *   |   *    | *1* |
+
+Now, we take a look at the probability $P(X=3,Y=1) = 0$. 
+
+Clearly, $P(X=3) \geq 1/12 > 0$ and, $P(Y=1) = 1/4$.
+
+Therefore, $P(X=3, Y=1) \neq P(X=3) \times P(Y=1)$ which entails that $X$ and $Y$ cannot be independent.
+
+c) We do not have enough information to answer this question.
+
+
+## Exercise 4 
+
+a) First we create the two iid random variables over the unit interval $[0,1]$. We will generate two random samples of size 20 (to better visualize it on the histogram) for the two random variables $X_1$ and $X_2$ and plot their sum.
+
+```{r, fig.align = 'center'}
+#-- Create the two random variables
+n <- 100
+M <- matrix(runif(n*2, min = 0, max = 1), ncol = n)
+sum_x <- colSums(M)
+
+#-- Plot the sum of the two random variables
+x = data.frame(sum_x)
+names(x)[1] <- "Sum"
+ggplot(x, aes(x=Sum))+ 
+  geom_histogram(aes(y=..density..), colour="black", fill = "grey", binwidth = 0.05) + 
+  labs(title = "Density histogram of the Sum of X1 and X2",
+       x = "Sum of X1 and X2",
+       y = "Count") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+b) Generate $X_1, X_2, \cdots, X_{50}$ random variables of size 20 each over the interval $[0,1]$. 
+  i) Let X be the sum of all random variables (i.e that $X= X_1+ X_2+ \cdots + X_{50}$). Using Markov’s inequality, we can estimate $P(X \geq 50)$ as follows :
+  
+$$
+P(X \geq 50) \leq \frac{\mathop{\mathbb{E}}(X)}{50}
+$$
+
+The expectation of the sum $X$ is $\mathop{\mathbb{E}}(X) = 50 \times \frac{1}{2} = 25$ and therefore,  $P(X \geq 50) \leq \frac{1}{2}$
+
+  ii) Chebyshev's inequality can be expressed as follows :
+  
+$$
+P(|X - E(X)| \geq a) \leq \frac{Var(X)}{a^2}
+$$
+In order to express our problem in the same forum as the above inequality, we write the following: 
+
+$$
+\begin{align}
+P(X \geq 50) &= P(X -25 \geq 25) \\
+             &\leq P(\lvert X -25 \rvert) \geq 25) \\
+             &\leq \frac{Var(X)}{25^2} = \frac{1}{150}\\
+\end{align}
+$$
+
+```{r}
+#-- compute the probability in i) using the strong law of large numbers
+X1 <- runif(10000, min=0, max=1)
+mean(X1)/length(X1)
+```
+
+```{r, fig.align = 'center'}
+#-- Generate a matrix of 50 x 10000 elements
+trials <- 10000
+rv <- 50
+A <- matrix(runif(trials*rv, min=0, max=1), ncol=trials)
+means <- colMeans(A)
+binwidth <- 0.01
+bins <- seq(min(means), max(means)+binwidth, binwidth)
+
+#-- Plotting results and adding superimposing the normal distribution pdf
+x = seq(0, 1, length.out = 10000)
+y = dnorm(x,mean(means), sd(means))
+
+hist(means, breaks = bins, col = "lightyellow", freq = FALSE)
+lines(x,y)
+```
+
+The line of the pdf is defined by the normal distribution $N \sim (\mu, \sigma)$ where $\mu = 0.5$ and $\sigma = 0.04$ which are numerically computed in the code above.
+
+# Part - B Introduction to Graph theory
+
+## Exercise 5
+
+My favorite author is the American novelist Stephen King, who wrote many blood freezing horror stories. *His* favorite author growing up was *Charles Dickens*. For the purpose of this exercise, i have chosen to study the dataset Word Adjacencies, which contains an adjacency network of common adjectives and nouns in the novel David Copperfield by Charles Dickens.
+
+a) The dataset, as described by M. Newman, contains *Nodes* that represent the most commonly occurring adjectives and nouns in the book.  Node values are 0 for adjectives and 1 for nouns.  Edges connect any pair of words that occur in adjacent position in the text of the book. The data can be obtained from this 
+([*Link*] (http://www-personal.umich.edu/~mejn/netdata/)). The data is already in a gml file (Graph Modeling Language) and is, therefore, easily readable as an igraph graph object instead of a data frame.
+
+ **Note : we could recover a dataframe object from the igraph object using as_data_frame command, but it is of no use here** 
+
+```{r, warning=FALSE}
+rm(list=ls())                                   #-- clear environment
+library(igraph)                                 #-- Load package igraph
+g <- read.graph("adjnoun.gml",format=c("gml"))  #-- read graph
+g <- as.directed(g, mode = c("arbitrary"))      #-- make the graph directed
+class(g)                                        #-- make sure it is igraph class
+is_simple(g)                                    #-- make sure it is a simple graph
+is_directed(g)
+```
+
+b) Calculating number of edges and number of nodes in the directed graph
+```{r}
+ecount(g)    #-- get number of edges in the graph
+vcount(g)    #-- get number of nodes/vertices
+```
+
+c) In a directed graph an (A,B) edge is mutual if the graph also includes a (B,A) directed edge. To find the number of reciprocated edges in an igraph object, we use the function which_mutual that returns a list of booleans for all 425 edges indicating whether there exists are directed edge in both directions between nodes. Here, the graph does not seem to contain any.
+
+```{r}
+sum(which_mutual(g, es = E(g)))
+```
+
+d) First, we will do a simple plot to explore the complexity of the graph.
+```{r, fig.align = 'center'}
+plot(g, main = "Main Graph")
+```
+
+ As we can see, it is hard to explore without setting any parameters. Therefore, we will use a subgraph of the first 30 nodes in order to better visualize the graph.
+
+```{r, fig.align = 'center'}
+g2 <- induced_subgraph(g, 1:20)
+plot(g2, main = "Subgraph of G")
+```
+
+ e) Modifying the plot using three parameters
+ 
+```{r, fig.align = 'center'}
+plot(g2,
+     vertex.size=30,
+     edge.color="black",
+     edge.arrow.size=0.4,
+     vertex.label.cex=0.8,
+     layout=layout.grid,
+     main = "Customized subgraph of G")
+```
+ 
+  It might be interesting to visualize dynamic version of the plot using the visNetwork package. We could do many customization regarding size of nodes, shadows, colors, physics and highlights upon selection. (*PS: Try to zoom in and move around the widgets with your mouse to visualize how highlights work*).
+
+```{r, warning=FALSE, fig.align = 'center'}
+library(visNetwork)
+library(tidyr)
+nodes <- igraph::as_data_frame(g2, what = c("vertices"))
+links <- igraph::as_data_frame(g2, what = c("edges"))
+visNetwork(nodes, links, width="100%", height="400px") %>%
+  visNodes(shape = "circle", 
+           color = list(background = "lightgrey", 
+                        border = "black",
+                        highlight = "pink"),
+           shadow = list(enabled = TRUE, size = 10)) %>% 
+  visEdges(shadow = TRUE,
+           arrows =list(to = list(enabled = TRUE, scaleFactor = 2)),
+           color = list(color = "black", highlight = "red")) %>%
+  visLayout(randomSeed = 12) # to have always the same network  
+```
+
+e) An adjacency matrix is a square matrix used to represent a finite graph. The elements of the matrix indicate whether pairs of vertices are adjacent or not in the graph. We can compute the adjacency matrix easily using the as_adjacency_matrix function. The square matrix has a dimension of $112 \times 112$
+
+```{r, warning=FALSE}
+library(matrixcalc)
+A <- as_adjacency_matrix(g, sparse = FALSE) #-- create adjacency matrix
+A[1:5,1:5]                                  #-- visualize only 5x5 matrix
+is.symmetric.matrix(A)                      #-- Check if it is symmetrical
+```
+
+d) We notice that the adjacency matrix computed above is not symmetrical. To make it symmetrical, we can simply transform the graph to an undirected one. This is because the existence of an edge between vertices i and j is exactly equivalent to the existence of an edge between vertices j and i in undirected graphs using the function as.undirected and setting the mode to collapse. This mode means that one undirected edge will be created for each pair of vertices which are connected with at least one directed edge, no multiple edges will be created.
+
+```{r}
+g3 <- as.undirected(g, mode = c("collapse"))
+is_directed(g3)                             #-- should be false
+B <- as_adjacency_matrix(g3, sparse = FALSE)
+is.symmetric.matrix(B)                      #-- should be true
+```
+
+## Exercise 6
+
+a) using graph command to plot the two undirected graphs described in the exercise.
+
+```{r}
+v <- 8
+g1 <- graph(c(2,1,1,6,1,5,5,7,3,5,5,4,4,8), n=v, directed = FALSE)
+g2 <- graph(c(2,1,1,3,3,2,5,8,4,5,6,4,6,8,4,7), n=v, directed = FALSE)
+class(g1)
+class(g2)
+```
+
+b) Creating two adjacency matrices and displaying the first $5 \times 5$ rows and columns of these matrices.
+
+```{r}
+A <- as_adjacency_matrix(g1, sparse = FALSE)
+B <- as_adjacency_matrix(g2, sparse = FALSE)
+A[1:5, 1:5]
+B[1:5, 1:5]
+```
+
+c) Plotting the graphs.
+
+```{r, figures-side1, fig.show="hold", out.width="50%"}
+par(mar = c(4, 4, .1, .1))
+plot(g1)
+title("Graph G1", line = -22)
+plot(g2)
+title("Graph G2", line = -22)
+```
+
+d) Computing an induced subgraph for each $G1$ and $G2$ induced by the first four vertices $V_1' = \{3,4,5,7,8\}$ and $V_2' = \{1,2,3\}$
+
+```{r, figures-side2, fig.show="hold", out.width="50%"}
+par(mar = c(4, 4, .1, .1))
+h1 <- induced.subgraph(g1,c(3,4,5,7,8))
+h2 <- induced.subgraph(g2,c(1,2,3))
+plot(h1)
+title("Induced graph of G1", line = -22)
+plot(h2)
+title("Induced graph of G2", line = -22)
+```
+
+e) Computing the complementer of each graph, plot them and report the set of edges and vertices for each one.
+```{r, figures-side3, fig.show="hold", out.width="50%"}
+par(mar = c(4, 4, .1, .1))
+c1 <- complementer(g1, loops = FALSE)
+c2 <- complementer(g2, loops = FALSE)
+plot(c1)
+title("Complement of G1", line = -22)
+plot(c2)
+title("Complement of G2", line = -22)
+```
+
+```{r}
+#-- Displaying only the first 5 rows of the matrix
+get.edgelist(c1)[1:5,]
+get.edgelist(c2)[1:5,]
+V(c1)
+V(c2)
+```
+
+f) Computing the intersection of the two graphs, plotting it and reporting its set of vertices and edges.
+
+```{r}
+i <- intersection(g1,g2)
+plot(i, main = "Intersection of G1 and G2")
+get.edgelist(i)
+V(i)
+```
