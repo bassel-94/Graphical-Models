@@ -1,0 +1,402 @@
+---
+title: "Graphical Models Homework - 3"
+author: "Bassel MASRI"
+date: "12/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+rm(list=ls())
+library(igraphdata)
+library(igraph)
+```
+
+1. Replication of the small world simulation
+
+We will start with a regular *d*-lattice ring-graph which corresponds to propability $p = 0$, then keep addding random links and explore the behavior of the clustering coefficient and the average shortes path. The random links will be added according to the following list of probabilities $p = \{0, 0.05, 0.2, 1\}$. In order to do so we will use the watts.strogatz function from the package *igraph*.
+
+```{r, fig.align='center'}
+#-- Get 4 plots in a grid
+par(mfrow=c(2,2))
+
+#-- compute four lattice graphs with neighborhood set to 2
+g1 = watts.strogatz.game(dim=1,size=30,nei=2,p=0)    
+g2 = watts.strogatz.game(dim=1,size=30,nei=2,p=0.05)
+g3 = watts.strogatz.game(dim=1,size=30,nei=2,p=0.2)
+g4 = watts.strogatz.game(dim=1,size=30,nei=2,p=1)
+
+#-- plot the four graphs
+plot(g1,vertex.albel=NA,layout=layout.circle,main=expression(paste(italic(p)," = 0")))
+plot(g2,vertex.albel=NA,layout=layout.circle,main=expression(paste(italic(p)," = 0.05")))
+plot(g3,vertex.albel=NA,layout=layout.circle,main=expression(paste(italic(p)," = 0.2")))
+plot(g4,vertex.albel=NA,layout=layout.circle,main=expression(paste(italic(p)," = 1")))
+
+#-- construct a loop to repeat the numerical experiment 100 times for consistency
+steps=seq(-4,-0.5,0.1)
+len=length(steps)
+cl=numeric(len)
+apl=numeric(len)
+ntrials=100
+for (i in 1:len){
+  cltemp=numeric(ntrials)
+  apltemp=numeric(ntrials)
+  for (j in 1:ntrials)	{
+    g=watts.strogatz.game(1,1000,10,10^steps[i])
+    cltemp[j]=transitivity(g)
+    apltemp[j]=average.path.length(g)
+    }
+  cl[i]=mean(cltemp)
+  apl[i]=mean(apltemp)
+}
+```
+
+```{r, fig.align='center'}
+#-- plot the logarithmic scale plot of clustering coefficient and diameter of the network
+plot(steps, cl/max(cl),ylim=c(0,1),lwd=3,type="l",col="blue", 
+     xlab=expression(log[10(p)]), 
+     ylab="clustering and average path length")
+lines(steps, apl/max(apl),ylim=c(0,1),lwd=3,type="l",col="red")
+abline(v=log10(10**-3), col="black")
+abline(v=log10(10**-1), col="black")
+text(-2, 0.6, "Small world property")
+```
+
+As we can see from the above graphs and the discussions in the lecture, the small world property which corresponds to a small network diameter and high clustering coefficient is obtained in the interval $p = [10^{-3}, 10^{-1}]$. We plot the vertical lines in the logirithmic scale to illustrate this.
+
+2. Significance of network characteristics
+
+ a. Compute clustering coefficient according to the formula given below 
+ 
+$$
+cl(G) = \frac{(A + A^T)^3_{vv}}{2[d_v^{tot}(d_v^{tot}-1) -2A^2_{vv})]}
+$$
+
+```{r}
+#-- create a function that computes the clustering coefficient
+clust.coef.dir = function(G){
+  if(!is.igraph(G)) stop("Input is not an igraph object")
+  A = as.matrix(get.adjacency(G))
+  d_tot = degree(G, v = V(G), mode = c("total"))
+  cl = ((t(A) + A)**3)/(2*(d_tot*(d_tot-1) - 2*A**2))
+  return(mean(cl))
+}
+
+#-- load the data macaque and compute its clustering coefficient and its average path length
+data(macaque)
+clust.coef.dir(macaque)
+average.path.length(macaque)
+```
+
+We notice that the macaque network has a relatively low clustering coefficient.
+
+ b. (and c) Numerical simulation of 1000 directed random graph along with a histogram summerizing the computed values to show the gaussian distribution.
+
+```{r, fig.align='center', fig.width=14, fig.height=6}
+vertices = 45 
+edges = 463
+N = 1000
+a = rep(0, N)
+c = rep(0,N)
+for (i in 1:N){
+  rg = erdos.renyi.game(vertices, edges, type="gnm", directed = TRUE)
+  a[i] = average.path.length(rg)
+  c[i] = clust.coef.dir(rg)
+}
+
+par(mfrow=c(1,2))
+hist(a, main = "Distribution of the average path lenth",
+     xlab = "Value of average path length",
+     ylab = "Frequency",
+     col = "grey",
+     breaks=20)
+
+hist(c, main = "Distribution of the clustering coefficient",
+     xlab = "Value of clustering coefficient",
+     ylab = "Frequency",
+     col = "grey",
+     breaks=20)
+```
+
+ d. Computing the p-value of the random network's statistics against the macaque network data. 
+ The $H_1$ hypothesis means that the macaque network can be simulated as random graph. The hypothesis testing will be done through a t-test.
+ 
+$$
+\begin{align}
+H_0 &= \text{The two networks are independent} \\
+H_1 &= \text{The two networks are similar}
+\end{align}
+$$
+```{r}
+#-- Computing p-value for clustering coefficient
+z_1 = (mean(c)-clust.coef.dir(macaque))/(sd(c)/sqrt(N))
+
+cat("p-value of the clustering coefficient is : " , 2*pt(-abs(z_1), df = N-1))
+
+#-- Computing p-value for the average path length
+z_2 = (mean(a)-average.path.length(macaque))/(sd(a)/sqrt(N))
+cat("\np-value of the clustering coefficient is : " , 2*pt(-abs(z_2), df = N-1))
+```
+
+We see that the p-value is practically 0 for a two tailed t-test on the random network statistics compared to the macaque network data. This means that the macaque network can be modeled using a Erdos-Renyi random graph model.
+
+3. Exploring the ERGM model
+
+ a. Loading the LDHS network and plotting the a random network with the same number of edges. 
+ Before performing a visual exploratory data analysis, we will check for missing values in the network to avoid problems later in model fitting.
+ 
+```{r}
+rm(list = ls())
+library(ergmharris)
+data("lhds")
+class(lhds)
+summary(lhds, print.adj = FALSE)
+```
+
+```{r}
+#-- check for missing data in the vertex attributes
+attr_names = c("hivscreen", "years", "nutrition", "popmil", "state")
+
+for(i in seq_along(attr_names)){
+  cat("attribute", attr_names[i], "contains ", sum(is.na(get.vertex.attribute(lhds, attr_names[i]))), "missing values\n")
+}
+
+#-- delete the missing values to avoid dealing with them
+for (i in seq_along(attr_names)){
+  delete.vertices(lhds, vid = which(is.na(lhds %v% attr_names[i])))
+}
+```
+
+```{r}
+summary(lhds, print.adj = F)
+```
+
+The number of vertices is reduced from 1283 to 1229 due to missing values. Since there aren't many, this should not affect the analysis of the network. 
+Now in order to compare the lhds to a random network, we need to replicate the same parameters for the random network such as size and density. From the summary statistics, we notice that the density of the graph is 0.0033 after deleting the missing values.
+
+```{r, fig.align='center', fig.width=14, fig.height=6}
+library(intergraph)
+library(network)
+
+#-- plot the network lhds
+par(mfrow=c(1,2))
+gplot(lhds, usearrows = FALSE, vertex.col = "blue4", edge.col = "grey40", vertex.cex = 2)
+title("LDHS Network")
+
+#-- plot random graph of the same size (as a network to get a similar, comparable plot)
+set.seed(123)
+r = rgraph(1229, 1, tprob = 0.0033, mode = "graph")
+rg = as.network(r, directed = FALSE )
+gplot(rg, usearrows = FALSE, vertex.col = "blue4", edge.col = "grey40", vertex.cex = 2)
+title("Random Network")
+```
+
+ b. The visual analysis indicates that the graphs do not seem to be same. The randomly generated graph seem to be more focalised in the center and more disperse on its outer edges as opposed to the LHDS network. However, the visual analysis cannot be conclusive of the nature of graph. Further explorations will have to be done throughout the exercise to be sure.
+
+ c. Plotting the degree distribution of both the random and the LHDS networks. Indeed, the examination of the degree distribution in the cases of a random graph and the LHDS network shows a distinguishable difference. The random graph follows what looks like a normal distribution whereas the LHDS resembles an exponential distribution which is consistent with our first visual analysis of the networks purely by exploring the plots.
+
+```{r, fig.align='center', fig.width=14, fig.height=6}
+par(mfrow=c(1,2))
+
+hist(degree(rg), main = "Degree distribution of the random graph",
+     xlab = "Degree",
+     ylab = "Frequency",
+     col = "grey",
+     breaks=20)
+
+hist(degree(lhds), main = "Degree distribution of the LHDS network",
+     xlab = "Degree",
+     ylab = "Frequency",
+     col = "grey",
+     breaks=20)
+```
+
+ d. Estimate an ERGM where departments communicat at random. This is the simplest possible model, the Bernoulli or Erdos-Renyi model. The ERGM expresses the probability of observing a tie between nodes $i$ and $j$ given some terms (i.e. network configurations). The Bernoulli graph uses a single term, the number of edges in the graph, to represent the probability of a tie as described in the below formula :
+
+$$
+P_\theta(Y = y) = \frac{1}{c}e^{\theta L (y)}
+$$
+
+Where  $L(y)$ is the number of edges. When we fit an ergm model, we are estimating the parameter $\theta$.
+
+```{r}
+library(statnet)
+edge.indep = ergm(lhds ~ edges)
+summary(edge.indep)
+```
+ 
+From the output the estimate of $\theta$ is $\hat{\theta} = -5.69$ which can be seen in the formula of the conditional log-odds of any tie occuring in a Bernoulli graph as follows :
+
+$$
+\text{logit}(P(Y_{ij} = 1 | Y_{-(ij)})) = \hat{\theta} = -5.69
+$$
+
+In other worlds, the addition of a tie multiplies the odds of any tie by $e^{-5.69}$ which can be easily computed in **R** using the below function : 
+
+```{r}
+#-- get the coefficient from the model and apply plogis function
+t = edge.indep$coef[1]
+plogis(t)
+```
+
+The resulting probability of a link is, as expected, the same as the density of the LHD network, $0.0033$. This model was estimated using the same maximum likelihood estimation methods used in standard binary logistic regression.
+
+ e. The average number of connections for each experience category can be calculated and plotted in order to examine the relationship between leader experience and network structure. We will first display a mixing matrix of years of leader experience then further examine the results with a plot. After looking up what the numbers in this matrix signifies, i got the following results : 
+ 
+ * 0 indicates 1-2 years of experience
+ * 1 indicates 3-5 years of experience
+ * 2 indicates 6-10 years of experience
+ * 3 indicate higher than 10 years of experience
+ 
+```{r, fig.align='center', fig.width=8, fig.height=6}
+#-- display a frequency table of the years of eperience of leaders in the network
+mixingmatrix(lhds, "years")
+
+#-- The number of links by experience level
+years = get.vertex.attribute( lhds, 'years')
+deg = degree(lhds)
+
+#-- means to plot
+m = tapply(deg, years, mean)
+
+plot(m, type = "b", 
+     col = "blue4",
+     axes = FALSE, 
+     ylab="Average Connections", 
+     xlab="Leader Experience")
+axis(1, at=1:4, lab=c("1-2 yrs", "3-5 yrs", "6-10 yrs", ">10 yrs"))
+axis(2)
+box()
+```
+
+In this mixing matrix, LHDs with the more experienced LHD leaders seem to have more connections with others in all experience groups. For example, of the 728 connected pairs of LHDs including a leader with the lowest experience level (coded 0), 278 are connections with an LHD with a leader in the top experience category (coded 3). From this assumption, if we plot the average number of connections for each experience category, we can further explore the relationship between leader experience and network structure. The resulting graph confirms that LHDs with more experienced leaders have more connections than those with less experienced leaders.
+
+ f. ERGM model with years of experience a the main effect.
+ 
+```{r}
+model.years = ergm( lhds ~ edges + nodefactor('years'))
+summary(model.years)
+```
+
+After fitting the model and computing its summary, we notice all three categories of leader experience are statistically significant and their estimates are positive ($[0.14,0.26,0.31]$). 
+This indicates an increased likelihood to form ties for LHDs if the LHD leader has more experience (e.g. more than 10 years of experience), compared to those that are less experienced (e.g. 1 to 2 years of experience). In other words, the null hypothesis that there is no association between years of experience and forming ties is rejected in favor of the alternate hypothesis given that the p-value of the estimates is lower than 0.05. This finding is consistent with the plot computed in part e.
+
+ g. Fit an ergm model where departments share a similarity effect with regard to the hivscreening (departments that provide an hivscreen have a preference for communicating with
+departments that also provide an hivscreen). We first look at the mixing between the yes and no categories of the hivscreening attributes.
+
+```{r}
+mixingmatrix(lhds, "hivscreen")
+```
+
+From the above result we can notice that there are 1426 connected pairs of LHDs where both LHDs are doing HIV screening demonstrating a bias for LHDs with similar hivscreening preferences to be connected (i.e. homophily). We can now fit an ergm model with the nodematch argument for "hivscreen" to confirm the observation.
+
+```{r}
+model.hiv = ergm( lhds ~ edges + nodematch('hivscreen', diff = T))
+summary(model.hiv)
+```
+
+Similarly, we notice there is a statistically significant association between forming ties and the attribute hivscreening. To know whether a department performs hivscreening or not has an impact on forming ties, we look at their estimates and their corresponding z-scores which are quite similar with a slight advantage of forming ties if the departments conducted an hivscreening (with a response Y).
+
+ h.i. (solving h and i together). As an extension to the question before, we will look at the probabilities of forming ties between departments who provide hivscreening as opposed to those who do not. 
+
+```{r}
+plogis(model.hiv$coef[2])
+plogis(model.hiv$coef[3])
+```
+
+Consistently with the model we fit and with the mixing matrix computed earlier, we notice that in both cases there is a high probability (above $72%$) of forming a tie with a slight advantage to form a tie when the two departments provide hivscreening ($74.1%$).
+
+ j. Examining the mixing matrix for nutrition.
+
+```{r}
+mixingmatrix(lhds, "nutrition")
+```
+
+The mixing matrix shows each level of each attribute in the network as both a column and a row; the numbers in the matrices represent the number of connected pairs of LHDs (also called dyads) with the corresponding row and column attribute. In the case of the attribute nutrition, a connected dyad where both LHDs were conducting nutrition programming would be counted among the 1738 dyads in the lower right corner of the second mixing matrix. In contrast, a dyad where one LHD is not doing nutrition programming and the other is doing nutrition programming would be counted as one of the 609 dyads on the off-diagonal. This finding demonstes a propensity for LHDs with similar programming to be connected (e.g. homophily of programming).
+
+ k.i. (solving k and i together) To confirm the above analysis, we will estimate an ERGM where departments that provide nutrition programs have a preference for communicating with departments that also provide nutrition programs (i.e. providing a specific level in the argument nodematch). We then compute the probability of forming a tie based on the estimate of this model.
+ 
+```{r}
+#-- fit model
+model.nutrition = ergm( lhds ~ edges + nodematch('nutrition', diff = T, keep = 2))
+summary(model.nutrition)
+```
+
+Again, we find that the attribute given is statistically significant with a low p-value.
+
+```{r}
+#-- compute probability of forming a tie
+plogis(model.nutrition$coef[2])
+```
+
+This indicates that the probability of forming a tie between two departments who both provide nutrition programs is significantly high (63%)
+
+ m. To compute the probability of forming a tie between departments who do not provide a nutrition program we repeat the same steps but indicate the level "N" to be taken into account when fitting the ERGM model.
+ 
+```{r}
+model.nutrition.no = ergm(lhds ~ edges + nodematch("nutrition", diff = T, keep = 1))
+plogis(model.nutrition.no$coef[2])
+```
+
+ n. The above results indicate a probability of 55% of forming ties between departments who do not provide nutrition programs, which is significantly less than the probability of forming a tie when said departments provide one. This is indeed consistent with the findings of the mixing matrix.
+ 
+ o. Estimating an ERGM where departments have a preference for communicating with other departments based on hivscreen and nutrition. 
+ Previously, we fitted models based on interaction terms which showed significant positive coefficients for both hivscreening and nutriotion indicating homophily in the network. That is, two LHDs that are both conduction the same nutrition programs are more likely to be connected, as are two LHDs conducting hivscreening. Therefore, it makes sens to fit a model with both of these attributes taking into account homophily (i.e. with interactions terms / similarity effects). For comparison reasons, we will fit two models, one with homophily taken into account and one without (i.e. using only the main effects function nodefactor) and compare the two fits using the BIC criterion.
+ 
+```{r}
+model.nutrition.hiv.1 = ergm(lhds ~ edges + nodematch("nutrition", diff = T) + nodematch("hivscreen", diff = T))
+summary(model.nutrition.hiv.1)
+```
+
+```{r}
+model.nutrition.hiv.2 = ergm(lhds ~ edges + nodefactor("nutrition") + nodefactor("hivscreen"))
+summary(model.nutrition.hiv.2)
+```
+ 
+```{r}
+round(data.frame(BIC_without_homophily = summary(model.nutrition.hiv.2)$bic, BIC_with_homophily = summary(model.nutrition.hiv.1)$bic),0)
+```
+
+Both models seem to show significant and positive coefficients of all the variables given into account whether we consider homophily in the network or not. However, when taking into account homophily, the Bayesian Information Criterion is reduced from 33,943 to 33,385 indicating a slightly better fit. We notice that out of all the models that we tried, the one that yeilds the lowest BIC criterion is the one where we consider communication based on hivscreening and on nutrition programs *with* homophily in the network taken into account. The physical interpretation of such results mean that leaders in LHDs conducting the same types of programming (e.g., HIV screening *and* nutrition) are more likely than expected to communicate.
+
+ p. Plot LHDS based on hivscreen and nutritions. This visual representation can give some insight into the structure of the network that can be helpful to confirm the previous findings and evaluation the statistical model. 
+ 
+```{r, fig.align='center', fig.width=14, fig.height=6}
+#-- visualizing the network with nodes colored by nutrition and HIV programs
+par(mfrow = c(1,2))
+palette(gray.colors(3,0,1))
+plot(lhds, vertex.col = 'nutrition', main = "Nutrition")
+plot(lhds, vertex.col = 'hivscreen', main = "HIV Screening Programs")
+legend("bottomright", c("Y","N"), pch=c(16,19), col = c("darkgrey", "black"))
+```
+
+There appears ti be some apparent clustering in the network graphic based on the nutrition program offered by the LHDs. Groups of nodes with the same color grey, indicating they both offer a nutrition program, are clustered slightly clustered together indicating a higher likelihood that an LHD would to communicate with another LHD when the two offer a nutritional program. Likewise, the network shaded by HIV screening also demonstrates some clustering; the LHDs with lighter shading seem to cluster toward the middle of the network, while those with darker shading seem to be more on the periphery of the network. This is coherent with the hypothesis stemming from the model fitting analysis which states that communication between LHDs appears more likely when they are conducting the same types of programming.
+
+q. To assess the goodness-of-fit of the model, we will use the function gof in ergm which runs Monte Carlo simulations and calculates comparisons with the original network graph in terms of
+the distribution of degree, geodesic length, and edge-wise shared partners.
+
+```{r, fig.align='center', fig.width=12, fig.height=10}
+gof.model.nutrition.hiv = gof(model.nutrition.hiv.1)
+par(mfrow=c(2,2))
+plot(gof.model.nutrition.hiv)
+```
+
+The graphical output of the goodness of fit test shows a good estimation of the of the proportion of nodes in the network. However, the model seems to underestimate the proportion of diads and edges (i.e. edge-wise shared partners). In other words, similar to the analysis of the bali network seen in the third lab, the ergm model that takes both nodefactors hivscreening and the our model is not capturing the transitivity in the network. Put differently, our model cannot generate networks that have transitivity level similar to our observed network.
+
+ r. To compensate for the above misinterpretation of the degree distribution effect in our previous model, we will now fit the model using the geometrically-weighted degree count network statistic (gwdegree term) and re-evaluate the goodness of fit.
+ 
+```{r, fig.align='center', fig.width=12, fig.height=10}
+#-- fit the new model with gwdegree and get summary
+final.model.1 = ergm(lhds ~ edges + nodematch("nutrition") + nodematch("hivscreen") + gwdegree(1, fixed = TRUE))
+summary(final.model.1)
+
+#-- analysis of goodness of fit
+gof.final=gof(final.model.1)
+par(mfrow=c(2,2))
+plot(gof.final.1)
+```
+
+This shows a slight improvement over the last model when comparing BIC scores and exploring the visual output of the goodness of fit. We can further improve the model by adding that account for the degree distribution **and** transitivity stemming from complex patterns of dependence in the observed network (e.g. gwesp). This can result in a more computationally expensive procedure and will not be explored.
