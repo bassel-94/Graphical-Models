@@ -15,11 +15,11 @@ library(igraphdata)
 library(igraph)
 ```
 
-1. Replication of the small world simulation
+## 1. Replication of the small world simulation
 
 We will start with a regular *d*-lattice ring-graph which corresponds to propability $p = 0$, then keep addding random links and explore the behavior of the clustering coefficient and the average shortes path. The random links will be added according to the following list of probabilities $p = \{0, 0.05, 0.2, 1\}$. In order to do so we will use the watts.strogatz function from the package *igraph*.
 
-```{r, fig.align='center'}
+```{r, fig.align='center', fig.width=14, fig.height=8}
 #-- Get 4 plots in a grid
 par(mfrow=c(2,2))
 
@@ -54,7 +54,7 @@ for (i in 1:len){
 }
 ```
 
-```{r, fig.align='center'}
+```{r, fig.align='center', fig.width=10, fig.height=6}
 #-- plot the logarithmic scale plot of clustering coefficient and diameter of the network
 plot(steps, cl/max(cl),ylim=c(0,1),lwd=3,type="l",col="blue", 
      xlab=expression(log[10(p)]), 
@@ -63,11 +63,12 @@ lines(steps, apl/max(apl),ylim=c(0,1),lwd=3,type="l",col="red")
 abline(v=log10(10**-3), col="black")
 abline(v=log10(10**-1), col="black")
 text(-2, 0.6, "Small world property")
+legend("bottomright", c("Clust. coef.","Diameter"), pch=c(19,19), col = c("red", "blue"))
 ```
 
 As we can see from the above graphs and the discussions in the lecture, the small world property which corresponds to a small network diameter and high clustering coefficient is obtained in the interval $p = [10^{-3}, 10^{-1}]$. We plot the vertical lines in the logirithmic scale to illustrate this.
 
-2. Significance of network characteristics
+## 2. Significance of network characteristics
 
  a. Compute clustering coefficient according to the formula given below 
  
@@ -91,7 +92,7 @@ clust.coef.dir(macaque)
 average.path.length(macaque)
 ```
 
-We notice that the macaque network has a relatively low clustering coefficient.
+We notice that the macaque network has a relatively low clustering coefficient and a high diameter.
 
  b. (and c) Numerical simulation of 1000 directed random graph along with a histogram summerizing the computed values to show the gaussian distribution.
 
@@ -143,10 +144,10 @@ cat("\np-value of the clustering coefficient is : " , 2*pt(-abs(z_2), df = N-1))
 
 We see that the p-value is practically 0 for a two tailed t-test on the random network statistics compared to the macaque network data. This means that the macaque network can be modeled using a Erdos-Renyi random graph model.
 
-3. Exploring the ERGM model
+## 3. Exploring the ERGM model
 
  a. Loading the LDHS network and plotting the a random network with the same number of edges. 
- Before performing a visual exploratory data analysis, we will check for missing values in the network to avoid problems later in model fitting.
+ Before performing a visual exploratory data analysis, we will check for missing values in the network to avoid problems later in model fitting. For some reason, my version of ergm package did not handle missing values and produced errors.
  
 ```{r}
 rm(list = ls())
@@ -158,10 +159,13 @@ summary(lhds, print.adj = FALSE)
 
 ```{r}
 #-- check for missing data in the vertex attributes
+library(network)
 attr_names = c("hivscreen", "years", "nutrition", "popmil", "state")
 
 for(i in seq_along(attr_names)){
-  cat("attribute", attr_names[i], "contains ", sum(is.na(get.vertex.attribute(lhds, attr_names[i]))), "missing values\n")
+  cat("attribute", attr_names[i], "contains ", 
+      sum(is.na(network::get.vertex.attribute(lhds, attr_names[i]))), 
+      "missing values\n")
 }
 
 #-- delete the missing values to avoid dealing with them
@@ -177,9 +181,10 @@ summary(lhds, print.adj = F)
 The number of vertices is reduced from 1283 to 1229 due to missing values. Since there aren't many, this should not affect the analysis of the network. 
 Now in order to compare the lhds to a random network, we need to replicate the same parameters for the random network such as size and density. From the summary statistics, we notice that the density of the graph is 0.0033 after deleting the missing values.
 
-```{r, fig.align='center', fig.width=14, fig.height=6}
+```{r, fig.align='center', fig.width=14, fig.height=6, warning=FALSE}
 library(intergraph)
 library(network)
+library(sna)
 
 #-- plot the network lhds
 par(mfrow=c(1,2))
@@ -222,7 +227,7 @@ $$
 
 Where  $L(y)$ is the number of edges. When we fit an ergm model, we are estimating the parameter $\theta$.
 
-```{r}
+```{r, warning=FALSE}
 library(statnet)
 edge.indep = ergm(lhds ~ edges)
 summary(edge.indep)
@@ -266,7 +271,8 @@ plot(m, type = "b",
      col = "blue4",
      axes = FALSE, 
      ylab="Average Connections", 
-     xlab="Leader Experience")
+     xlab="Leader Experience",
+     main ="Relationship between leader experience and connections")
 axis(1, at=1:4, lab=c("1-2 yrs", "3-5 yrs", "6-10 yrs", ">10 yrs"))
 axis(2)
 box()
@@ -368,12 +374,12 @@ Both models seem to show significant and positive coefficients of all the variab
 #-- visualizing the network with nodes colored by nutrition and HIV programs
 par(mfrow = c(1,2))
 palette(gray.colors(3,0,1))
-plot(lhds, vertex.col = 'nutrition', main = "Nutrition")
-plot(lhds, vertex.col = 'hivscreen', main = "HIV Screening Programs")
-legend("bottomright", c("Y","N"), pch=c(16,19), col = c("darkgrey", "black"))
+plot(lhds, vertex.col = 'nutrition', main = "Nutrition programs")
+plot(lhds, vertex.col = 'hivscreen', main = "HIV screening programs")
+legend("bottomright", c("Yes","No"), pch=c(19,19), col = c("darkgrey", "black"))
 ```
 
-There appears ti be some apparent clustering in the network graphic based on the nutrition program offered by the LHDs. Groups of nodes with the same color grey, indicating they both offer a nutrition program, are clustered slightly clustered together indicating a higher likelihood that an LHD would to communicate with another LHD when the two offer a nutritional program. Likewise, the network shaded by HIV screening also demonstrates some clustering; the LHDs with lighter shading seem to cluster toward the middle of the network, while those with darker shading seem to be more on the periphery of the network. This is coherent with the hypothesis stemming from the model fitting analysis which states that communication between LHDs appears more likely when they are conducting the same types of programming.
+There appears to be some apparent clustering in the network graphic based on the nutrition program offered by the LHDs. Groups of nodes with the same color grey, indicating they both offer a nutrition program, are clustered slightly clustered together indicating a higher likelihood that an LHD would to communicate with another LHD when the two offer a nutritional program. Likewise, the network shaded by HIV screening also demonstrates some clustering; the LHDs with lighter shading seem to cluster toward the middle of the network, while those with darker shading seem to be more on the periphery of the network. This is coherent with the hypothesis stemming from the model fitting analysis which states that communication between LHDs appears more likely when they are conducting the same types of programming.
 
 q. To assess the goodness-of-fit of the model, we will use the function gof in ergm which runs Monte Carlo simulations and calculates comparisons with the original network graph in terms of
 the distribution of degree, geodesic length, and edge-wise shared partners.
@@ -384,19 +390,27 @@ par(mfrow=c(2,2))
 plot(gof.model.nutrition.hiv)
 ```
 
-The graphical output of the goodness of fit test shows a good estimation of the of the proportion of nodes in the network. However, the model seems to underestimate the proportion of diads and edges (i.e. edge-wise shared partners). In other words, similar to the analysis of the bali network seen in the third lab, the ergm model that takes both nodefactors hivscreening and the our model is not capturing the transitivity in the network. Put differently, our model cannot generate networks that have transitivity level similar to our observed network.
+The graphical output of the goodness of fit test shows a good estimation of the of the proportion of nodes in the network. However, the model seems to underestimate the proportion of diads and edges (i.e. edge-wise shared partners). In other words, similar to the analysis of the bali network seen in the third lab, the ergm model that takes both hivscreening and nutrition programs as nodefactors is not capturing the transitivity in the network. Put differently, our model cannot generate networks that have transitivity level similar to our observed network.
 
- r. To compensate for the above misinterpretation of the degree distribution effect in our previous model, we will now fit the model using the geometrically-weighted degree count network statistic (gwdegree term) and re-evaluate the goodness of fit.
+ r. To compensate for the above misinterpretation of the degree distribution effect in our previous model, we will now fit the model using the geometrically-weighted degree count network statistic (gwdegree term) and re-evaluate the goodness of fit (visually and comparing BIC scores).
  
 ```{r, fig.align='center', fig.width=12, fig.height=10}
 #-- fit the new model with gwdegree and get summary
-final.model.1 = ergm(lhds ~ edges + nodematch("nutrition") + nodematch("hivscreen") + gwdegree(1, fixed = TRUE))
-summary(final.model.1)
+final.model = ergm(lhds ~ edges + nodematch("nutrition") + nodematch("hivscreen") + gwdegree(2, fixed = TRUE))
+summary(final.model)
 
 #-- analysis of goodness of fit
-gof.final=gof(final.model.1)
+gof.final=gof(final.model)
 par(mfrow=c(2,2))
-plot(gof.final.1)
+plot(gof.final)
 ```
 
-This shows a slight improvement over the last model when comparing BIC scores and exploring the visual output of the goodness of fit. We can further improve the model by adding that account for the degree distribution **and** transitivity stemming from complex patterns of dependence in the observed network (e.g. gwesp). This can result in a more computationally expensive procedure and will not be explored.
+To be thorough, we will summarise the BIC scores of the models taking into account the nodefactors nutrition and hivscreening in a table to better differentiate between the models.
+
+```{r}
+round(data.frame(BIC_without_homophily = summary(model.nutrition.hiv.2)$bic, 
+                 BIC_with_homophily = summary(model.nutrition.hiv.1)$bic, 
+                 BIC_with_gwdegree = summary(final.model)$bic),0)
+```
+
+Indeed, we notice a slight improvement over the last model when comparing BIC scores and exploring the visual output of the goodness of fit. The model however still underestimates some of edge-wise partners. We can further improve the model by adding terms that account for the degree distribution **and** transitivity stemming from complex patterns of dependence in the observed network (e.g. gwesp). Not to mention that exploring further nodefactors like the continuous variable popmil and communication by state can also improve the model. On the otherhand, this can result in a more computationally expensive procedure and will not be explored in this homework.
