@@ -2,14 +2,15 @@
 title: "Graphical Models Homework - 3"
 author: "Bassel MASRI"
 date: "12/21/2020"
-output: html_document
+output:
+html_notebook: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, include = FALSE}
 rm(list=ls())
 library(igraphdata)
 library(igraph)
@@ -54,7 +55,7 @@ for (i in 1:len){
 }
 ```
 
-```{r, fig.align='center', fig.width=10, fig.height=6}
+```{r, fig.align='center', fig.width=9, fig.height=6}
 #-- plot the logarithmic scale plot of clustering coefficient and diameter of the network
 plot(steps, cl/max(cl),ylim=c(0,1),lwd=3,type="l",col="blue", 
      xlab=expression(log[10(p)]), 
@@ -63,7 +64,7 @@ lines(steps, apl/max(apl),ylim=c(0,1),lwd=3,type="l",col="red")
 abline(v=log10(10**-3), col="black")
 abline(v=log10(10**-1), col="black")
 text(-2, 0.6, "Small world property")
-legend("bottomright", c("Clust. coef.","Diameter"), pch=c(19,19), col = c("red", "blue"))
+legend("bottomright", c("Diameter", "Clust. coef."), pch=c(19,19), col = c("red", "blue"))
 ```
 
 As we can see from the above graphs and the discussions in the lecture, the small world property which corresponds to a small network diameter and high clustering coefficient is obtained in the interval $p = [10^{-3}, 10^{-1}]$. We plot the vertical lines in the logirithmic scale to illustrate this.
@@ -82,7 +83,11 @@ clust.coef.dir = function(G){
   if(!is.igraph(G)) stop("Input is not an igraph object")
   A = as.matrix(get.adjacency(G))
   d_tot = degree(G, v = V(G), mode = c("total"))
-  cl = ((t(A) + A)**3)/(2*(d_tot*(d_tot-1) - 2*A**2))
+  S=A+t(A)
+  num=diag(S%*% S %*% S)
+  denom=diag(A%*%A)
+  denom=2*(d_tot*(d_tot-1)-2*denom)
+  cl=num/denom
   return(mean(cl))
 }
 
@@ -149,9 +154,15 @@ We see that the p-value is practically 0 for a two tailed t-test on the random n
  a. Loading the LDHS network and plotting the a random network with the same number of edges. 
  Before performing a visual exploratory data analysis, we will check for missing values in the network to avoid problems later in model fitting. For some reason, my version of ergm package did not handle missing values and produced errors.
  
-```{r}
+```{r, include=FALSE}
 rm(list = ls())
 library(ergmharris)
+library(intergraph)
+library(network)
+library(sna)
+```
+
+```{r}
 data("lhds")
 class(lhds)
 summary(lhds, print.adj = FALSE)
@@ -159,7 +170,6 @@ summary(lhds, print.adj = FALSE)
 
 ```{r}
 #-- check for missing data in the vertex attributes
-library(network)
 attr_names = c("hivscreen", "years", "nutrition", "popmil", "state")
 
 for(i in seq_along(attr_names)){
@@ -182,10 +192,6 @@ The number of vertices is reduced from 1283 to 1229 due to missing values. Since
 Now in order to compare the lhds to a random network, we need to replicate the same parameters for the random network such as size and density. From the summary statistics, we notice that the density of the graph is 0.0033 after deleting the missing values.
 
 ```{r, fig.align='center', fig.width=14, fig.height=6, warning=FALSE}
-library(intergraph)
-library(network)
-library(sna)
-
 #-- plot the network lhds
 par(mfrow=c(1,2))
 gplot(lhds, usearrows = FALSE, vertex.col = "blue4", edge.col = "grey40", vertex.cex = 2)
@@ -227,12 +233,15 @@ $$
 
 Where  $L(y)$ is the number of edges. When we fit an ergm model, we are estimating the parameter $\theta$.
 
-```{r, warning=FALSE}
+```{r, include=FALSE}
 library(statnet)
+```
+
+```{r}
 edge.indep = ergm(lhds ~ edges)
 summary(edge.indep)
 ```
- 
+
 From the output the estimate of $\theta$ is $\hat{\theta} = -5.69$ which can be seen in the formula of the conditional log-odds of any tie occuring in a Bernoulli graph as follows :
 
 $$
