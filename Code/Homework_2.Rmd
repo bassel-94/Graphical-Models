@@ -8,6 +8,8 @@ df_print: paged
 fig_caption: yes
 ---
 
+### Theoretical proofs
+
 1. For an adjacency matrix $A \in \mathbb{R}^{n \times n}$ and $ \mathbb{1} \in \mathbb{R}^n$
 
 a. We can write the expression of $\boldsymbol K$ the vector of degrees of the vertices, as follows : 
@@ -16,6 +18,255 @@ $$
 K = A \times \boldsymbol1 \text{ where } K \in \mathbb{R}^n
 $$
 
-b. If we have $n$ nodes, there are $n-1$ directed edges than can lead from it (going to every other node). 
-Therefore, the maximum number of edges in a directed graph is $n \times(n-1)$
+b. let $m$ be the number of edges in a network and $A$ its adjacency matrix. The number of edges is computed as follows : 
 
+$$
+m = \textbf{1}^t \times A \times \textbf{1}
+$$
+
+2. A network in which every vertex has degree k means that the vector $K=(k, \cdots, k) \in \mathbb{R}^{n}$ follows the below equality :
+
+$$
+A\times \textbf{1}=K \times \textbf{1} \text{ where } \textbf{1}\in \mathbb{R}^{n}
+$$
+
+We can then deduce that $\textbf{1}\in\mathbb{R}^{n}$ is an eigen vector of the adjacency matrix A $\in \mathbb{R}^{n}$.
+
+3. Proof that the formula of the cut can be written as follows : 
+
+$$
+C(s) = \frac{1}{4}s^{T}Ls
+$$
+
+where the Laplacian Matrix  is $L$ and $s \in \{-1,+1\}$ 
+
+By definition,the cut can be written as :
+
+$$
+C(s)=\frac{1}{4}\sum\limits_{i,j}^{p}A_{ij}(1-s_{i}s_{j})
+$$
+
+We know that $L = D-A$ and, by extension, we can rewrite the above equality as follows : 
+
+$$
+\begin{align}
+C(s) &= \frac{1}{4}\sum\limits_{i,j}^{p}L_{ij}s_{i}s_{j} \\
+     &= \frac{1}{4}\sum\limits_{i,j}^{p}(D_{ij}- A_{ij})s_{i}s_{j} \\
+     &= \frac{1}{4}\sum\limits_{i,j}^{p}(D_{ij}s_{i}s_{j})-\frac{1}{4}\sum\limits_{i,j}^{p}(A_{ij}s_{i}s_{j})
+\end{align}
+$$
+
+And since $\sum\limits_{i,j}^{p} (D_{ij}s_{i}s_{j})=\sum\limits_{i,j}^{p} (A_{ij})$ and $\sum\limits_{i,j}^{p}(A_{ij})=\sum\limits_{i}^{p}\sum\limits_{j}^{p}(A_{ij})$, 
+along with $s_{i}s_{i}= 1$,  $D_{ii}=1$, and $D_{ij}\neq 0$ if $i \neq 1$, we can rewrite the above expression as :
+
+$$
+\begin{align}
+C(s) &= \frac{1}{4} \sum\limits_{i,j}^{p} L_{ij}s_{i}s_{j} \\
+     &= \frac{1}{4}\sum\limits_{i,j}^{p}A_{ij}(1-s_{i}s_{j})\\
+     &= \frac{1}{4}s^{T}Ls
+\end{align}
+$$
+
+4. Laplacien of a network.
+
+In the following script, we compute the Laplacian matrix, the eigen values and the eigen vectors of the network in question.
+
+```{r}
+#-- set laplacien matrix
+lap = matrix(c(2,-1,-1,0,0,0,-1,2,-1,0,0,0,
+                       -1,-1,3,-1,0,0,0,0,-1,3,-1,-1,
+                       0,0,0,-1,2,-1,0,0,0,-1,-1,2), byrow = TRUE, ncol = 6)
+lap
+
+#-- compute eigenvalues
+eigen_values = eigen(lap)$values
+eigen_values
+
+#-- compute eigenvectors
+eigen_vectors = eigen(lap)$vectors
+eigen_vectors
+```
+
+The eigen vector that corresponds to the second smallest eigenvalue is the following vector 
+
+```{r}
+eigen_vectors[,5]
+```
+
+By definition, the minimum cut equals to :
+$C(s^*) = v_2^TLv_2$
+
+As we do not know a priori the sizes of the sought communities, we partition the nodes according to the signs of the entries of $v_2$.
+
+We then have $s = (1, 1, 1, -1, -1, -1)$
+
+5. Interpretation of the powers of an adjacency matrix
+
+a. Proof for k = 1.
+
+By definition of the adjacency matrix, the $(i,j)^{th}$ entry corresponds to the number of walks of length 1 from node i to node j.
+
+b. Supposing the $(i,j)^{th}$ entry $A^{k-1}_{ij}$ of $A^{k-1}$ yields the number of walks of length k-1 from node i to node j.
+$$
+A^{k} = A^{k-1} \times A
+$$
+
+By definition ; 
+
+$$
+(A^{k})_{ij} =  \sum\limits_{l=1}^{m}  A_{il}^{k-1} A_{lj}
+$$
+
+As $(i,l)^{th}$ entry $(A^{k-1})_{il}$ yields the number of walks of length k-1 from node i to node l and (l,j)th entry $A_{lj}$ yields the number of walks of length 1 from node l to node j, when we sum, we obtain that the $(i,j)^{th}$ entry which means that $(A^{k})_{ij}$ yields the number $(y-1)+1=y$ from node i to j.
+
+By recurrence, the claim is true for all k.
+
+c. The $(i,i)^{th}$ entry of $(A^{2})_{ii}$ yields the number of walks of length 2 from node i to i, that is number of edges connected to the node i, which is by definition the degree the node.
+
+$$
+\begin{align}
+tr(A^{2}) &=  \sum\limits_{i=1}^{N_V} (A_{ii})^{2} \\
+          &= \sum\limits_{i=1}^{N_V} d_i \\
+          &= 2 \times N_{E}
+\end{align}
+$$
+
+d. We know that the $(i,i)^{th}$ entry of $(A^{3})_{ii}$ yields the number of walks of length 3 from node i to i, that is the double of the number of triangles vertex i. 
+(two ways to go from i to i)
+
+Therefore, it holds that $(A^{3})_{ii} / 2 = \# \triangle_{i}$ which means that the following equality stands true :
+
+$$
+\begin{align}
+tr((A^{3}) &=  \sum\limits_{i=1}^{N_V} (A_{ii})^{3} \\
+          &= \sum\limits_{i=1}^{N_V} 2 \times \# \triangle_{i} \\
+          &= 2 \times 3 \times \# \triangle \\
+          &= 6 \times \# \triangle \text{ in } {G}
+\end{align}
+$$
+
+### Exploring the Enron email communications network
+
+a. Load the data and plot the histogram of the in-degree node.
+
+```{r, include=FALSE}
+rm(list = ls())
+library(igraph)
+library(igraphdata)
+``` 
+
+```{r, fig.align='center', fig.width=14, fig.height=6}
+#-- load enron data
+data(enron)
+g=enron
+
+#-- plot the in and out degree histograms
+par(mfrow = c(1,2))
+
+hist(degree(g,mode = "in"),
+     col="grey40",
+     freq=TRUE,
+     xlab="In degree",
+     main="Histogram of the In-degree")
+
+hist(degree(g,mode = "out"),
+     col="grey40",
+     freq=TRUE,
+     xlab="Out degree node",
+     main="Histogram of the Out-degree")
+```
+
+b. Calculate the mean in-degree  and the mean out-degree.
+
+The mean in-degree equals to 681.5707.
+The mean out-degree equals to 681.5707.
+
+```{r}
+cat("The mean in degree is : ", round(mean(degree(g,mode="in")),1))
+cat("\nThe mean out degree is : ", round(mean(degree(g,mode="out")),1))
+```
+
+c. Standardised betweenness centrality and closeness centrality scores.
+
+By definition, closeness centrality (or closeness) of a node is a measure of centrality in a network, calculated as the reciprocal of the sum of the length of the shortest paths between the node and all other nodes in the graph. Thus, the more central a node is, the closer it is to all other nodes. Therefore, in order to know which employee is the most central according to this statistic, we take the minimum closeness. (i.e. closer to other nodes)
+
+The betweenness, however, is a centrality measure of a vertex within a graph which quantifies the number of times a node acts as a bridge along the shortest path between two other nodes. Thus, taking the maximum of this statistic yeilds the node that is most central in the graph.
+
+```{r, warning = FALSE}
+#-- compute betweenness and closeness
+b = betweenness(g, directed=T)
+c = closeness(g, mode="total")
+
+#-- get name of node corresponding to max and min of betweenness and closeness
+cat("Central node according to the maximum betwenness is employee number ", which.max(b))
+cat("\nCentral node according to the maximum betwenness is employee number ", which.min(c))
+```
+
+d. Compute the diameter, average path length and the global clustering coefficient.
+
+The diameter is 6.
+
+The average path length is 2.39.
+
+The global clustering coefficient is 0.37.
+About one third of the connected triples close to form triangles.
+
+```{r}
+cat("\nThe diameter is ", diameter(g))
+cat("\nThe average path length is ", average.path.length(g))
+cat("\nThe global clustering coefficient is ", transitivity(g))
+```
+
+e. Check whether graph is weakly connected or strongly connected.
+
+By definition, a strongly connected graph is one where every pair of vertices $(u, v)$ in the graph contains a path between each other, (i.e. the adjacency matrix contains non-zero elements). In contrast, a weakly connected graph is one where there doesn’t exist any path between any two pairs of vertices. Hence, if a graph g doesn’t contain a directed path (from $u$ to $v$ or from $v$ to $u$ for every pair of vertices $u, v$) then it is weakly connected. The adjacency matrix in such case would be random.
+
+```{r}
+#-- check wether all elements are connected
+if(!is_connected(g)) cat("Not all elements are connected, therefore it is not strongly connected\n")
+
+#-- to explicitly check for weakly connected graph, we can explore the adjacency matrix
+as.matrix(get.adjacency(g))[1:10,1:10]
+```
+
+From the above 10 rows and 10 columns of the adjacency matrix, we can clearly see a sparse which means that indeed not all nodes are connected. It is, therefore, a weakly connected graph.
+
+f. Computing weak components and number of edges
+
+```{r}
+#-- compute number of weak components
+cat("there are ", count_components(g, mode = "weak")," weak components in the graph\n")
+
+#-- compute edges by computing size of the cluster of weak components
+cat("there are", max(components(g, mode = "weak")$csize), "weak edges ")
+```
+
+g. There are 11 strong components in the graph.
+
+```{r}
+#-- compute number of strong components
+cat("there are ", count_components(g, mode = "strong")," strong components in the graph\n")
+
+#-- compute edges by computing size of the cluster of strong components
+cat("there are", max(components(g, mode = "strong")$csize), "strong edges ")
+```
+
+h. Compute the number of nodes with 0 out degree, and list the corresponding employee names.
+
+Not all employee names seem to be available in the data (contains some missing values). We will display a list of the names all the same.
+
+```{r}
+V(g)[which(degree(g, mode = c("out"))==0)]$Name
+```
+
+i. there are 176 employees who have been contacted by 30 or more employees.
+
+```{r}
+sum(degree(g,mode = c("in"))>= 30)
+```
+
+j. There are 144 employees have contacted 30 or more employees.
+
+```{r}
+sum(degree(g,mode = c("out"))>= 30)
+```
