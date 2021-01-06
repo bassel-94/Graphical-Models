@@ -1,0 +1,101 @@
+---
+title: "Graphical Models Homework - 4"
+author: "Bassel MASRI"
+date: "12/21/2020"
+output:
+html_notebook: default
+---
+
+3. Implementing Meinshausen-Buhlmann and the Glasso algorithms on the Ecoli network.
+
+```{r, warning=FALSE}
+#-- clean environment and load library
+rm(list=ls())
+library(huge)
+library(igraphdata)
+library(igraph)
+library(sand)
+```
+
+```{r}
+#-- Meinshausen-Buhlmann algorithm
+huge_mb.out = huge(Ecoli.expr, method = "mb", nlambda=NULL,lambda.min.ratio = NULL)
+
+#-- optimal lambda RIC
+huge_mb.opt_RIC = huge.select(huge_mb.out,criterion="ric")
+huge_mb.opt_RIC$opt.lambda
+g1 = graph.adjacency(huge_mb.opt_RIC$refit,"undirected")
+
+#-- optimal lambda Stability selection criterion
+huge_mb.opt_stars = huge.select(huge_mb.out,criterion="stars")
+huge_mb.opt_stars$opt.lambda
+g2 = graph.adjacency(huge_mb.opt_stars$refit,"undirected")
+
+
+#-- GLASSO
+huge_glasso.out = huge(Ecoli.expr,method = "glasso", nlambda=NULL,lambda.min.ratio = NULL)
+
+#-- optimal lambda RIC
+huge_glasso.opt_RIC = huge.select(huge_glasso.out,criterion="ric")
+huge_glasso.opt_RIC$opt.lambda
+g3 = graph.adjacency(huge_glasso.opt_RIC$refit,"undirected")
+
+#-- optimal lambda Stability selection criterion
+huge_glasso.opt_stars = huge.select(huge_glasso.out,criterion="stars")
+huge_glasso.opt_stars$opt.lambda
+g4 = graph.adjacency(huge_glasso.opt_stars$refit,"undirected")
+```
+
+4. Comparing networks
+
+```{r, fig.align='center', fig.width=6, fig.height=6}
+#-- get intersection
+inter = graph.intersection(g2,g4)
+plot(inter, vertex.color = "blue4", 
+     vertex.size = 6, 
+     edge.arrow.size=.4,
+     vertex.label=NA, 
+     edge.color = "grey40")
+```
+
+```{r, fig.align='center', fig.width=12, fig.height=6}
+#-- compute degree distribution of each network
+par(mfrow = c(1,2))
+
+hist(degree(g2), main = "Degree distribution of Meinshausen-Buhlmann \nmodel with optimal lambda",
+     xlab = "Degree",
+     ylab = "Frequency",
+     col = "grey",
+     breaks=20)
+
+hist(degree(g4), main = "Degree distribution of GLASSO \nwith optimal lambda",
+     xlab = "Degree",
+     ylab = "Frequency",
+     col = "grey",
+     breaks=20)
+```
+
+```{r}
+#-- number of edges of the created networks
+E(g2)
+E(g4)
+```
+
+We notice a significant difference in the degree distribution of both models. The Meinshausen-Buhlmann seems to follow a more gaussian curve whereas the GLASSO seems to resemble a decaying power law distribution. 
+
+We also seem to have different number of edges. For the Meinshausen-Buhlmann model we have 623 edges whereas the GLASSO only contains 554 edges.
+
+5. Comparing with the Ecoli network
+
+```{r}
+#-- construct the ecoli graph
+g.regDB=graph.adjacency(regDB.adj,"undirected")
+
+#-- get intersection with Meinshausen-Buhlmann (with optimal lambda)
+graph.intersection(g.regDB, g2, byname = FALSE)
+
+#-- get intersection with GLASSO (with optimal lambda)
+graph.intersection(g.regDB, g4, byname = FALSE)
+```
+
+We notice that the Meinshausen-Buhlmann was able to capture 19 genes in the original Ecoli network whereas the GLASSO model was able to capture only 9.
